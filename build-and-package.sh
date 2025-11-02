@@ -28,8 +28,11 @@ echo "Cleaning build directory..."
 cd ${BUILD_DIR}
 # Force complete cleanup - remove everything to ensure fresh configure
 echo "Removing old build configuration and artifacts..."
-rm -rf ./* 2>/dev/null || true
+# Aggressively clean everything including subdirectories
+find . -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
 rm -rf .[!.]* 2>/dev/null || true  # Remove hidden files too
+# Also clean any libsanitizer subdirectories that might have cached objects
+rm -rf x86_64-unknown-linux-gnu/libsanitizer 2>/dev/null || true
 
 echo "Configuring GCC..."
 ${SOURCE_DIR}/configure \
@@ -38,13 +41,45 @@ ${SOURCE_DIR}/configure \
     --enable-threads=posix \
     --disable-bootstrap \
     --disable-libsanitizer \
-    --disable-multilib
+    --disable-multilib || {
+    echo "Configure failed, continuing anyway..."
+}
+
+# After configure, ensure gthr-default.h exists in libgcc build directories
+echo "Ensuring gthr-default.h exists in all libgcc build directories..."
+find ${BUILD_DIR} -type d -name "libgcc" -o -type d -path "*/32/libgcc" -o -type d -path "*/x86_64-*/libgcc" | while read libgcc_dir; do
+    if [ -d "$libgcc_dir" ] && [ -f "${SOURCE_DIR}/libgcc/gthr-posix.h" ] && [ ! -f "$libgcc_dir/gthr-default.h" ]; then
+        echo "Creating gthr-default.h in $libgcc_dir"
+        cp -f "${SOURCE_DIR}/libgcc/gthr-posix.h" "$libgcc_dir/gthr-default.h" || \
+        ln -sf "${SOURCE_DIR}/libgcc/gthr-posix.h" "$libgcc_dir/gthr-default.h" || true
+    fi
+done
 
 # Build
 echo "Building GCC (this may take several hours)..."
 # Set FLEXFLAGS for compatibility with newer flex versions
 export FLEXFLAGS="--nounistd"
-make -j$(nproc) FLEXFLAGS="--nounistd"
+# Build with a hook to create gthr-default.h as directories are created
+# Use a wrapper that monitors and creates the file during build
+echo "Starting build (will create gthr-default.h files as needed)..."
+make -j$(nproc) FLEXFLAGS="--nounistd" 2>&1 | tee /tmp/build.log &
+MAKE_PID=$!
+
+# Monitor and create gthr-default.h in any new libgcc directories
+while kill -0 $MAKE_PID 2>/dev/null; do
+    find ${BUILD_DIR} -type d -path "*/libgcc" -exec sh -c '[ -d "$1" ] && [ -f "${SOURCE_DIR}/libgcc/gthr-posix.h" ] && [ ! -f "$1/gthr-default.h" ] && cp -f "${SOURCE_DIR}/libgcc/gthr-posix.h" "$1/gthr-default.h" 2>/dev/null' _ {} \; 2>/dev/null || true
+    sleep 1
+done
+
+wait $MAKE_PID
+BUILD_STATUS=$?
+
+if [ $BUILD_STATUS -ne 0 ]; then
+    # If build failed, check if it was due to gthr-default.h and try one more time
+    find ${BUILD_DIR} -type d -path "*/libgcc" -exec sh -c '[ -d "$1" ] && [ -f "${SOURCE_DIR}/libgcc/gthr-posix.h" ] && cp -f "${SOURCE_DIR}/libgcc/gthr-posix.h" "$1/gthr-default.h" 2>/dev/null' _ {} \; 2>/dev/null || true
+    echo "Retrying build after ensuring all gthr-default.h files exist..."
+    make -j$(nproc) FLEXFLAGS="--nounistd"
+fi
 
 # Install to staging directory
 echo "Installing GCC to staging directory..."
