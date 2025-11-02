@@ -41,6 +41,10 @@
 #include <errno.h>
 #include <sched.h>
 #include <dlfcn.h>
+// Compatibility fix for modern glibc: __res_state requires explicit feature test
+#ifndef __USE_GNU
+#define __USE_GNU
+#endif
 #define __need_res_state
 #include <resolv.h>
 #include <malloc.h>
