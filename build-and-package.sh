@@ -98,22 +98,84 @@ export FLEXFLAGS="--nounistd"
 # These will be overwritten by our touch rules in Makefiles, but creating them
 # early prevents Make from trying to compile via pattern rules
 echo "Pre-creating empty libgcov-interface object files..."
+# Create directories that might be needed and pre-create files with future timestamps
+# so Make thinks they're up-to-date
 for dir in $(find ${BUILD_DIR} -type d -name "libgcc" 2>/dev/null); do
-    touch "${dir}/_gcov_flush.o" "${dir}/_gcov_fork.o" "${dir}/_gcov_execl.o" \
+    touch -t 203001010000 "${dir}/_gcov_flush.o" "${dir}/_gcov_fork.o" "${dir}/_gcov_execl.o" \
           "${dir}/_gcov_execlp.o" "${dir}/_gcov_execle.o" "${dir}/_gcov_execv.o" \
           "${dir}/_gcov_execvp.o" "${dir}/_gcov_execve.o" "${dir}/_gcov_reset.o" \
           "${dir}/_gcov_dump.o" 2>/dev/null || true
 done
 
 # Also create them in any multilib subdirectories that might exist
-find ${BUILD_DIR} -type d -path "*/32/libgcc" -o -path "*/x86_64-*/libgcc" 2>/dev/null | while read dir; do
-    touch "${dir}/_gcov_flush.o" "${dir}/_gcov_fork.o" "${dir}/_gcov_execl.o" \
+find ${BUILD_DIR} -type d \( -path "*/32/libgcc" -o -path "*/x86_64-*/libgcc" \) 2>/dev/null | while read dir; do
+    touch -t 203001010000 "${dir}/_gcov_flush.o" "${dir}/_gcov_fork.o" "${dir}/_gcov_execl.o" \
           "${dir}/_gcov_execlp.o" "${dir}/_gcov_execle.o" "${dir}/_gcov_execv.o" \
           "${dir}/_gcov_execvp.o" "${dir}/_gcov_execve.o" "${dir}/_gcov_reset.o" \
           "${dir}/_gcov_dump.o" 2>/dev/null || true
 done
 
+# Also proactively create directories that will be created during build
+mkdir -p ${BUILD_DIR}/x86_64-unknown-linux-gnu/libgcc ${BUILD_DIR}/x86_64-unknown-linux-gnu/32/libgcc 2>/dev/null || true
+touch -t 203001010000 ${BUILD_DIR}/x86_64-unknown-linux-gnu/libgcc/_gcov_flush.o \
+      ${BUILD_DIR}/x86_64-unknown-linux-gnu/libgcc/_gcov_fork.o \
+      ${BUILD_DIR}/x86_64-unknown-linux-gnu/libgcc/_gcov_execl.o \
+      ${BUILD_DIR}/x86_64-unknown-linux-gnu/libgcc/_gcov_execlp.o \
+      ${BUILD_DIR}/x86_64-unknown-linux-gnu/libgcc/_gcov_execle.o \
+      ${BUILD_DIR}/x86_64-unknown-linux-gnu/libgcc/_gcov_execv.o \
+      ${BUILD_DIR}/x86_64-unknown-linux-gnu/libgcc/_gcov_execvp.o \
+      ${BUILD_DIR}/x86_64-unknown-linux-gnu/libgcc/_gcov_execve.o \
+      ${BUILD_DIR}/x86_64-unknown-linux-gnu/libgcc/_gcov_reset.o \
+      ${BUILD_DIR}/x86_64-unknown-linux-gnu/libgcc/_gcov_dump.o \
+      ${BUILD_DIR}/x86_64-unknown-linux-gnu/32/libgcc/_gcov_flush.o \
+      ${BUILD_DIR}/x86_64-unknown-linux-gnu/32/libgcc/_gcov_fork.o \
+      ${BUILD_DIR}/x86_64-unknown-linux-gnu/32/libgcc/_gcov_execl.o \
+      ${BUILD_DIR}/x86_64-unknown-linux-gnu/32/libgcc/_gcov_execlp.o \
+      ${BUILD_DIR}/x86_64-unknown-linux-gnu/32/libgcc/_gcov_execle.o \
+      ${BUILD_DIR}/x86_64-unknown-linux-gnu/32/libgcc/_gcov_execv.o \
+      ${BUILD_DIR}/x86_64-unknown-linux-gnu/32/libgcc/_gcov_execvp.o \
+      ${BUILD_DIR}/x86_64-unknown-linux-gnu/32/libgcc/_gcov_execve.o \
+      ${BUILD_DIR}/x86_64-unknown-linux-gnu/32/libgcc/_gcov_reset.o \
+      ${BUILD_DIR}/x86_64-unknown-linux-gnu/32/libgcc/_gcov_dump.o 2>/dev/null || true
+
+# Start a background process to continuously fix Makefiles as they're created
+echo "Starting background Makefile fixer..."
+(
+    while true; do
+        # Fix any newly created Makefiles
+        find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -newer /tmp/build-start.$$ 2>/dev/null | while read mf; do
+            # Comment out pattern rules
+            sed -i '/^\$(libgcov-interface-objects):/,/^\t\$(gcc_compile).*libgcov-interface\.c/ { s/^/# DISABLED /; }' "$mf" 2>/dev/null
+            sed -i '/\$(gcc_compile).*-c.*libgcov-interface\.c/s/^/# DISABLED /' "$mf" 2>/dev/null
+            # Remove from dependencies
+            sed -i 's/\$(libgcov-interface-objects) //g; s/ \$(libgcov-interface-objects)//g' "$mf" 2>/dev/null
+            # Add explicit touch rules
+            if ! grep -q "_gcov_flush.o.*:" "$mf"; then
+                sed -i '/^LIBGCOV_DRIVER =/a\
+\
+# Disable libgcov-interface - create empty files\
+_gcov_flush.o _gcov_fork.o _gcov_execl.o _gcov_execlp.o _gcov_execle.o _gcov_execv.o _gcov_execvp.o _gcov_execve.o _gcov_reset.o _gcov_dump.o:\
+\ttouch "$@"\
+' "$mf" 2>/dev/null
+            fi
+        done
+        sleep 5
+    done
+) &
+MAKEFILE_FIXER_PID=$!
+trap "kill $MAKEFILE_FIXER_PID 2>/dev/null || true" EXIT
+touch /tmp/build-start.$$
+
 make -j$(nproc) FLEXFLAGS="--nounistd"
+MAKE_EXIT=$?
+
+# Kill the background fixer
+kill $MAKEFILE_FIXER_PID 2>/dev/null || true
+wait $MAKEFILE_FIXER_PID 2>/dev/null || true
+
+if [ $MAKE_EXIT -ne 0 ]; then
+    exit $MAKE_EXIT
+fi
 
 # Install to staging directory
 echo "Installing GCC to staging directory..."
