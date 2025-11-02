@@ -20,9 +20,16 @@ mkdir -p ${BUILD_DIR}
 mkdir -p ${OUTPUT_DIR}
 mkdir -p ${PREFIX}
 
-# Configure
-echo "Configuring GCC..."
+# Clean and Configure
+echo "Cleaning build directory..."
 cd ${BUILD_DIR}
+# Remove old configuration if it exists
+if [ -f Makefile ]; then
+    echo "Removing old build configuration..."
+    make distclean 2>/dev/null || rm -rf ./* || true
+fi
+
+echo "Configuring GCC..."
 ${SOURCE_DIR}/configure \
     --prefix=${PREFIX} \
     --enable-languages=c,c++ \
