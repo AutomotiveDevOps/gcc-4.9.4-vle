@@ -37,6 +37,9 @@ along with GCC; see the file COPYING3.  If not see
 #define YY_DECL int yylex (const char **yylval)
 #define yyterminate() return EOF_TOKEN
 
+%}
+
+%{
 struct fileloc lexer_line;
 int lexer_toplevel_done;
 
