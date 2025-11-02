@@ -56,9 +56,14 @@ find ${BUILD_DIR} -type d -name "libgcc" -o -type d -path "*/32/libgcc" -o -type
 done
 
 # Fix generated Makefiles: config.status overrides our LIBGCOV_INTERFACE = empty
-# Force it to be empty in all generated libgcc Makefiles after configure
+# This must happen AFTER all configure steps complete (including subdirectory configures)
 echo "Fixing generated Makefiles to disable libgcov-interface..."
+# Wait a moment for any concurrent configure processes to finish
+sleep 2
+# Fix all libgcc Makefiles that were generated
 find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i '/^LIBGCOV_INTERFACE =/,/^LIBGCOV_DRIVER =/ { /^LIBGCOV_INTERFACE =/ s/=.*/= /; /_gcov_flush/,/_gcov_dump/ d; }' {} \; 2>/dev/null || true
+# Also remove the compilation rule if it exists
+find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i '/$(libgcov-interface-objects):.*libgcov-interface\.c/,/^[[:space:]]*\$(gcc_compile)/ d' {} \; 2>/dev/null || true
 
 # Build
 echo "Building GCC (this may take several hours)..."
