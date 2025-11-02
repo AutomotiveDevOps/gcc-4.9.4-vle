@@ -24,7 +24,9 @@ mkdir -p "${BUILD_DIR}"
 
 # Run build and packaging
 echo "Starting GCC build and packaging (this may take several hours)..."
+echo "Using all available CPUs ($(nproc))..."
 docker run --rm \
+    --cpus=$(nproc) \
     -v "${SCRIPT_DIR}:/src/gcc-4.9.4-vle:ro" \
     -v "${BUILD_DIR}:/build/gcc-build" \
     -v "${OUTPUT_DIR}:/workspace/output" \
