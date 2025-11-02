@@ -81,7 +81,11 @@
 #include <sys/statvfs.h>
 #include <sys/timex.h>
 #include <sys/user.h>
+#if __GLIBC_PREREQ(2, 28)
+/* sys/ustat.h removed in glibc 2.28+ */
+#else
 #include <sys/ustat.h>
+#endif
 #include <linux/cyclades.h>
 #include <linux/if_eql.h>
 #include <linux/if_plip.h>
@@ -163,7 +167,12 @@ namespace __sanitizer {
   unsigned struct_old_utsname_sz = sizeof(struct old_utsname);
   unsigned struct_oldold_utsname_sz = sizeof(struct oldold_utsname);
   unsigned struct_itimerspec_sz = sizeof(struct itimerspec);
+#if __GLIBC_PREREQ(2, 28)
+  /* struct ustat removed in glibc 2.28+, use a placeholder size */
+  unsigned struct_ustat_sz = 0;
+#else
   unsigned struct_ustat_sz = sizeof(struct ustat);
+#endif
 #endif // SANITIZER_LINUX
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
