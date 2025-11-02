@@ -30,6 +30,8 @@ RUN apt-get update && apt-get install -y \
     libisl-dev \
     gawk \
     perl \
+    flex \
+    bison \
     zlib1g-dev \
     libc6-dev \
     gcc-multilib \
