@@ -67,8 +67,21 @@ find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i '/^LIBGC
 find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i '/$(libgcov-interface-objects):.*libgcov-interface\.c/,/^[[:space:]]*\$(gcc_compile)/ d' {} \; 2>/dev/null || true
 find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i '/_gcov_flush.*libgcov-interface\|_gcov_fork.*libgcov-interface\|_gcov_execl.*libgcov-interface/d' {} \; 2>/dev/null || true
 # Most importantly: Comment out or remove libgcov-interface-objects from libgcov-objects
-find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i 's/$(libgcov-interface-objects) //g' {} \; 2>/dev/null || true
-find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i 's/ $(libgcov-interface-objects)//g' {} \; 2>/dev/null || true
+# Try multiple patterns to catch all variations
+find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i \
+    -e 's/\$(libgcov-interface-objects) //g' \
+    -e 's/ \$(libgcov-interface-objects)//g' \
+    -e 's/\$(libgcov-interface-objects)//g' \
+    {} \; 2>/dev/null || true
+# Also explicitly set libgcov-interface-objects to empty
+find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i 's/^libgcov-interface-objects =.*/libgcov-interface-objects =/' {} \; 2>/dev/null || true
+# Add explicit empty rules to prevent implicit rule matching
+find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sh -c 'cat >> "$1" << '\''EOF'\''
+# Disable libgcov-interface compilation
+_gcov_flush.o _gcov_fork.o _gcov_execl.o _gcov_execlp.o _gcov_execle.o _gcov_execv.o _gcov_execvp.o _gcov_execve.o _gcov_reset.o _gcov_dump.o:
+	@echo "Skipping libgcov-interface build" > /dev/null
+EOF
+' _ {} \; 2>/dev/null || true
 
 # Build
 echo "Building GCC (this may take several hours)..."
