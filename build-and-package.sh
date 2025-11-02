@@ -98,10 +98,11 @@ export FLEXFLAGS="--nounistd"
 # These will be overwritten by our touch rules in Makefiles, but creating them
 # early prevents Make from trying to compile via pattern rules
 echo "Pre-creating empty libgcov-interface object files..."
-# Create directories that might be needed and pre-create files with future timestamps
-# so Make thinks they're up-to-date
+# Use a timestamp well into the future (year 2030) in UTC to ensure Make thinks files are up-to-date
+# Setting TZ=UTC ensures consistent timestamp interpretation regardless of container timezone
+FUTURE_TIMESTAMP=$(TZ=UTC date -d "+1 year" +%Y%m%d%H%M.%S 2>/dev/null || echo "203001010000.00")
 for dir in $(find ${BUILD_DIR} -type d -name "libgcc" 2>/dev/null); do
-    touch -t 203001010000 "${dir}/_gcov_flush.o" "${dir}/_gcov_fork.o" "${dir}/_gcov_execl.o" \
+    TZ=UTC touch -t "${FUTURE_TIMESTAMP}" "${dir}/_gcov_flush.o" "${dir}/_gcov_fork.o" "${dir}/_gcov_execl.o" \
           "${dir}/_gcov_execlp.o" "${dir}/_gcov_execle.o" "${dir}/_gcov_execv.o" \
           "${dir}/_gcov_execvp.o" "${dir}/_gcov_execve.o" "${dir}/_gcov_reset.o" \
           "${dir}/_gcov_dump.o" 2>/dev/null || true
@@ -109,7 +110,7 @@ done
 
 # Also create them in any multilib subdirectories that might exist
 find ${BUILD_DIR} -type d \( -path "*/32/libgcc" -o -path "*/x86_64-*/libgcc" \) 2>/dev/null | while read dir; do
-    touch -t 203001010000 "${dir}/_gcov_flush.o" "${dir}/_gcov_fork.o" "${dir}/_gcov_execl.o" \
+    TZ=UTC touch -t "${FUTURE_TIMESTAMP}" "${dir}/_gcov_flush.o" "${dir}/_gcov_fork.o" "${dir}/_gcov_execl.o" \
           "${dir}/_gcov_execlp.o" "${dir}/_gcov_execle.o" "${dir}/_gcov_execv.o" \
           "${dir}/_gcov_execvp.o" "${dir}/_gcov_execve.o" "${dir}/_gcov_reset.o" \
           "${dir}/_gcov_dump.o" 2>/dev/null || true
@@ -117,7 +118,7 @@ done
 
 # Also proactively create directories that will be created during build
 mkdir -p ${BUILD_DIR}/x86_64-unknown-linux-gnu/libgcc ${BUILD_DIR}/x86_64-unknown-linux-gnu/32/libgcc 2>/dev/null || true
-touch -t 203001010000 ${BUILD_DIR}/x86_64-unknown-linux-gnu/libgcc/_gcov_flush.o \
+TZ=UTC touch -t "${FUTURE_TIMESTAMP}" ${BUILD_DIR}/x86_64-unknown-linux-gnu/libgcc/_gcov_flush.o \
       ${BUILD_DIR}/x86_64-unknown-linux-gnu/libgcc/_gcov_fork.o \
       ${BUILD_DIR}/x86_64-unknown-linux-gnu/libgcc/_gcov_execl.o \
       ${BUILD_DIR}/x86_64-unknown-linux-gnu/libgcc/_gcov_execlp.o \
