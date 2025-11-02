@@ -242,7 +242,8 @@ static int TracerThread(void* argument) {
   internal_memset(&handler_stack, 0, sizeof(handler_stack));
   handler_stack.ss_sp = handler_stack_memory.data();
   handler_stack.ss_size = kHandlerStackSize;
-  internal_sigaltstack(&handler_stack, NULL);
+  // Cast stack_t to struct sigaltstack for internal_sigaltstack call
+  internal_sigaltstack((const struct sigaltstack*)&handler_stack, NULL);
 
   // Install our handler for fatal signals. Other signals should be blocked by
   // the mask we inherited from the caller thread.
@@ -269,7 +270,8 @@ static int TracerThread(void* argument) {
   }
   thread_suspender_instance = NULL;
   handler_stack.ss_flags = SS_DISABLE;
-  internal_sigaltstack(&handler_stack, NULL);
+  // Cast stack_t to struct sigaltstack for internal_sigaltstack call
+  internal_sigaltstack((const struct sigaltstack*)&handler_stack, NULL);
   return exit_code;
 }
 

@@ -46,16 +46,13 @@
 #include <mntent.h>
 #include <netinet/ether.h>
 #include <utime.h>
-/* Don't include sys/mount.h if linux/fs.h is included, as they conflict */
-#ifndef __linux_fs_h
-#include <sys/mount.h>
-#endif
 #include <sys/ptrace.h>
 #include <sys/sysinfo.h>
 #include <sys/vt.h>
 #include <linux/cdrom.h>
 #include <linux/fd.h>
 #include <linux/fs.h>
+/* Don't include sys/mount.h as it conflicts with linux/mount.h (included via linux/fs.h) */
 #include <linux/hdreg.h>
 #include <linux/input.h>
 #include <linux/ioctl.h>
