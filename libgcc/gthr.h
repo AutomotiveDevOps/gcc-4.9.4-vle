@@ -145,11 +145,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define GTHREAD_USE_WEAK 1
 #endif
 #endif
-// Compatibility fix for modern build systems: Include gthr-posix.h directly
-// when gthr-default.h symlink doesn't exist (common in multilib subdirectories).
-// Since we're building with --enable-threads=posix, gthr-default.h is always
-// a symlink to gthr-posix.h anyway, so including it directly is equivalent.
-#include "gthr-posix.h"
+#include "gthr-default.h"
 
 #ifndef HIDE_EXPORTS
 #pragma GCC visibility pop

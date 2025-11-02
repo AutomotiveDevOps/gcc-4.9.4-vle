@@ -45,15 +45,14 @@ ${SOURCE_DIR}/configure \
     echo "Configure failed, continuing anyway..."
 }
 
-# After configure, ensure gthr-default.h exists in libgcc build directories
-echo "Ensuring gthr-default.h exists in all libgcc build directories..."
-find ${BUILD_DIR} -type d -name "libgcc" -o -type d -path "*/32/libgcc" -o -type d -path "*/x86_64-*/libgcc" | while read libgcc_dir; do
-    if [ -d "$libgcc_dir" ] && [ -f "${SOURCE_DIR}/libgcc/gthr-posix.h" ] && [ ! -f "$libgcc_dir/gthr-default.h" ]; then
-        echo "Creating gthr-default.h in $libgcc_dir"
-        cp -f "${SOURCE_DIR}/libgcc/gthr-posix.h" "$libgcc_dir/gthr-default.h" || \
-        ln -sf "${SOURCE_DIR}/libgcc/gthr-posix.h" "$libgcc_dir/gthr-default.h" || true
-    fi
-done
+# After configure, ensure gthr-default.h exists in source directory
+# config.status creates it in build directories, but libgcov-interface.c compiles
+# from source and needs it there too
+echo "Ensuring gthr-default.h exists in source directory..."
+if [ -f "${SOURCE_DIR}/libgcc/gthr-posix.h" ] && [ ! -f "${SOURCE_DIR}/libgcc/gthr-default.h" ]; then
+    echo "Creating gthr-default.h symlink in source directory"
+    ln -sf "gthr-posix.h" "${SOURCE_DIR}/libgcc/gthr-default.h" || true
+fi
 
 # Fix generated Makefiles: config.status overrides our LIBGCOV_INTERFACE = empty
 # This must happen AFTER all configure steps complete (including subdirectory configures)
