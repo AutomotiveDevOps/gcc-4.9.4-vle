@@ -55,31 +55,16 @@ find ${BUILD_DIR} -type d -name "libgcc" -o -type d -path "*/32/libgcc" -o -type
     fi
 done
 
+# Fix generated Makefiles: config.status overrides our LIBGCOV_INTERFACE = empty
+# Force it to be empty in all generated libgcc Makefiles after configure
+echo "Fixing generated Makefiles to disable libgcov-interface..."
+find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i '/^LIBGCOV_INTERFACE =/,/^LIBGCOV_DRIVER =/ { /^LIBGCOV_INTERFACE =/ s/=.*/= /; /_gcov_flush/,/_gcov_dump/ d; }' {} \; 2>/dev/null || true
+
 # Build
 echo "Building GCC (this may take several hours)..."
 # Set FLEXFLAGS for compatibility with newer flex versions
 export FLEXFLAGS="--nounistd"
-# Build with a hook to create gthr-default.h as directories are created
-# Use a wrapper that monitors and creates the file during build
-echo "Starting build (will create gthr-default.h files as needed)..."
-make -j$(nproc) FLEXFLAGS="--nounistd" 2>&1 | tee /tmp/build.log &
-MAKE_PID=$!
-
-# Monitor and create gthr-default.h in any new libgcc directories
-while kill -0 $MAKE_PID 2>/dev/null; do
-    find ${BUILD_DIR} -type d -path "*/libgcc" -exec sh -c '[ -d "$1" ] && [ -f "${SOURCE_DIR}/libgcc/gthr-posix.h" ] && [ ! -f "$1/gthr-default.h" ] && cp -f "${SOURCE_DIR}/libgcc/gthr-posix.h" "$1/gthr-default.h" 2>/dev/null' _ {} \; 2>/dev/null || true
-    sleep 1
-done
-
-wait $MAKE_PID
-BUILD_STATUS=$?
-
-if [ $BUILD_STATUS -ne 0 ]; then
-    # If build failed, check if it was due to gthr-default.h and try one more time
-    find ${BUILD_DIR} -type d -path "*/libgcc" -exec sh -c '[ -d "$1" ] && [ -f "${SOURCE_DIR}/libgcc/gthr-posix.h" ] && cp -f "${SOURCE_DIR}/libgcc/gthr-posix.h" "$1/gthr-default.h" 2>/dev/null' _ {} \; 2>/dev/null || true
-    echo "Retrying build after ensuring all gthr-default.h files exist..."
-    make -j$(nproc) FLEXFLAGS="--nounistd"
-fi
+make -j$(nproc) FLEXFLAGS="--nounistd"
 
 # Install to staging directory
 echo "Installing GCC to staging directory..."
