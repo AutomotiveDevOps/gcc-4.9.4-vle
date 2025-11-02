@@ -26,11 +26,10 @@ mkdir -p ${PREFIX}
 # Clean and Configure
 echo "Cleaning build directory..."
 cd ${BUILD_DIR}
-# Remove old configuration if it exists
-if [ -f Makefile ]; then
-    echo "Removing old build configuration..."
-    make distclean 2>/dev/null || rm -rf ./* || true
-fi
+# Force complete cleanup - remove everything to ensure fresh configure
+echo "Removing old build configuration and artifacts..."
+rm -rf ./* 2>/dev/null || true
+rm -rf .[!.]* 2>/dev/null || true  # Remove hidden files too
 
 echo "Configuring GCC..."
 ${SOURCE_DIR}/configure \
