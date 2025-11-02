@@ -1,13 +1,12 @@
 # Dockerfile for building GCC 4.9.4-VLE on Ubuntu 24.04
 # 
+# Builds GCC and produces both .deb and .tar.bz2 artifacts
+#
 # Build the image:
 #   docker build -t gcc-4.9.4-vle-builder .
 #
 # Run the build:
 #   docker run --rm -v $(pwd):/workspace gcc-4.9.4-vle-builder
-#
-# Or to interactively build:
-#   docker run --rm -it -v $(pwd):/workspace gcc-4.9.4-vle-builder bash
 
 FROM ubuntu:24.04
 
@@ -34,21 +33,21 @@ RUN apt-get update && apt-get install -y \
     libc6-dev \
     gcc-multilib \
     g++-multilib \
+    checkinstall \
+    dpkg-dev \
+    fakeroot \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /build
 
-# Copy source code (will be overridden by volume mount in practice)
-COPY . /src/gcc-4.9.4-vle
-
-# Create build directory
-RUN mkdir -p /build/gcc-build
+# Copy build script
+COPY docker-build-and-package.sh /build/build-and-package.sh
+RUN chmod +x /build/build-and-package.sh
 
 # Set environment for build
 ENV CC=gcc
 ENV CXX=g++
 
-# Default command: configure and build
-CMD ["bash", "-c", "cd /build/gcc-build && /src/gcc-4.9.4-vle/configure --prefix=/usr/local/gcc-4.9.4-vle --enable-languages=c,c++ --enable-threads=posix --disable-bootstrap && make -j$(nproc)"]
-
+# Default command: build and package
+CMD ["/build/build-and-package.sh"]

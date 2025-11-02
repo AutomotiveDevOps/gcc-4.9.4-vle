@@ -1,5 +1,6 @@
 # Ignore build artifacts
 gcc-build/
+output/
 **/build/
 **/.git/
 **/.*.swp
@@ -15,4 +16,8 @@ gcc-build/
 # Ignore test results
 **/*.sum
 **/*.log
+
+# Ignore scripts (they'll be copied explicitly)
+docker-build.sh
+docker-build-interactive.sh
 
