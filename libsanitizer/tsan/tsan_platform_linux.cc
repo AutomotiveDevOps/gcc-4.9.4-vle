@@ -50,6 +50,10 @@
 #define __need_res_state
 #include <resolv.h>
 #include <malloc.h>
+// Ensure MAXNS is defined (from resolv.h)
+#ifndef MAXNS
+#define MAXNS 3
+#endif
 
 #ifdef sa_handler
 # undef sa_handler
