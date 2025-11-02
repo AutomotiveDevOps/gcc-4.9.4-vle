@@ -31,6 +31,7 @@ RUN apt-get update && apt-get install -y \
     perl \
     zlib1g-dev \
     libc6-dev \
+    file \
     gcc-multilib \
     g++-multilib \
     checkinstall \

@@ -1,12 +1,13 @@
 #!/bin/bash
 set -e
 
-SOURCE_DIR=/src/gcc-4.9.4-vle
-BUILD_DIR=/build/gcc-build
-PREFIX=/usr/local/gcc-4.9.4-vle
-OUTPUT_DIR=/workspace/output
-VERSION=4.9.4
-RELEASE=1
+# Configuration - can be overridden by environment variables
+SOURCE_DIR=${SOURCE_DIR:-/src/gcc-4.9.4-vle}
+BUILD_DIR=${BUILD_DIR:-/build/gcc-build}
+PREFIX=${PREFIX:-/usr/local/gcc-4.9.4-vle}
+OUTPUT_DIR=${OUTPUT_DIR:-/workspace/output}
+VERSION=${GCC_VERSION:-4.9.4}
+RELEASE=${GCC_RELEASE:-1}
 
 echo "=== Building GCC ${VERSION}-VLE ==="
 
