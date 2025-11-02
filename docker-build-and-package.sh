@@ -24,7 +24,7 @@ ${SOURCE_DIR}/configure \
     --enable-languages=c,c++ \
     --enable-threads=posix \
     --disable-bootstrap \
-    CXXFLAGS="-Wno-error=literal-suffix -Wno-error=cast-function-type -Wno-error=implicit-fallthrough"
+    CXXFLAGS="-std=c++14 -Wno-error=literal-suffix -Wno-error=cast-function-type -Wno-error=implicit-fallthrough"
 
 # Build
 echo "Building GCC (this may take several hours)..."
