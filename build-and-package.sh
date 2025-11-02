@@ -10,6 +10,10 @@ VERSION=${GCC_VERSION:-4.9.4}
 RELEASE=${GCC_RELEASE:-1}
 
 echo "=== Building GCC ${VERSION}-VLE ==="
+# Note: libsanitizer is disabled due to compatibility issues with modern Linux
+# kernel headers (Ubuntu 24.04+). The sanitizers are optional and not required
+# for the compiler to function. If sanitizer support is needed, it can be
+# built separately with modern toolchains.
 
 # Create directories
 mkdir -p ${BUILD_DIR}
@@ -23,7 +27,8 @@ ${SOURCE_DIR}/configure \
     --prefix=${PREFIX} \
     --enable-languages=c,c++ \
     --enable-threads=posix \
-    --disable-bootstrap
+    --disable-bootstrap \
+    --disable-libsanitizer
 
 # Build
 echo "Building GCC (this may take several hours)..."
