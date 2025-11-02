@@ -156,6 +156,11 @@ This will:
 1. Build the Docker image with all dependencies
 2. Configure GCC
 3. Compile GCC (may take several hours)
+4. Package GCC into `.deb` and `.tar.bz2` artifacts
+
+The build artifacts will be in `./output/` directory:
+- `gcc-4.9.4-vle_1_<arch>.deb` - Debian package ready for installation
+- `gcc-4.9.4-vle-<arch>.tar.bz2` - Compressed archive of the complete compiler
 
 The build output will be in `../gcc-build/` directory.
 
