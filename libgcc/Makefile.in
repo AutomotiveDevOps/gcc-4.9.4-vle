@@ -878,8 +878,9 @@ $(libgcov-profiler-objects): %$(objext): $(srcdir)/libgcov-profiler.c $(srcdir)/
 	$(gcc_compile) -DL$* -c $(srcdir)/libgcov-profiler.c
 # Compatibility fix: Disabled libgcov-interface compilation
 # These components are disabled to avoid gthr-default.h dependency issues
-# $(libgcov-interface-objects): %$(objext): $(srcdir)/libgcov-interface.c $(srcdir)/libgcov.h
-#	$(gcc_compile) -DL$* -c $(srcdir)/libgcov-interface.c
+# Instead of compiling, just create empty files
+$(libgcov-interface-objects): %$(objext):
+	@touch "$@"
 $(libgcov-driver-objects): %$(objext): $(srcdir)/libgcov-driver.c \
   $(srcdir)/libgcov-driver-system.c $(srcdir)/libgcov.h
 	$(gcc_compile) -DL$* -c $(srcdir)/libgcov-driver.c
