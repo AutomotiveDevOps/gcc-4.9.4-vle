@@ -14,18 +14,16 @@ The Docker build system:
 ### Components
 
 1. **Dockerfile** - Base image with all build dependencies
-2. **docker-build-and-package.sh** - Build script that runs inside the container
-3. **docker-build.sh** - Automated build wrapper script
-4. **docker-build-interactive.sh** - Interactive build environment script
+2. **build-and-package.sh** - Build script that runs inside the container (produces both .deb and .tar.bz2)
+3. **build.sh** - Unified build wrapper script
 
 ### Directory Structure
 
 ```
 /projects/gcc-4.9.4-vle/          # Source directory (mounted as /src/gcc-4.9.4-vle)
 ├── Dockerfile
-├── docker-build-and-package.sh
-├── docker-build.sh
-├── docker-build-interactive.sh
+├── build.sh                       # Main entry point - builds Docker image and runs build
+├── build-and-package.sh           # Build script that runs inside container
 ├── output/                         # Output artifacts (mounted as /workspace/output)
 │   ├── gcc-4.9.4-vle_1_<arch>.deb
 │   └── gcc-4.9.4-vle-<arch>.tar.bz2
@@ -37,22 +35,28 @@ The Docker build system:
 ### Automated Build
 
 ```bash
-./docker-build.sh
+./build.sh
 ```
 
 This will:
 1. Build the Docker image (first time only)
 2. Configure and compile GCC
-3. Create `.deb` and `.tar.bz2` artifacts
+3. Create both `.deb` and `.tar.bz2` artifacts
 4. Save artifacts to `./output/` directory
 
-### Interactive Build
+### Manual Docker Usage
+
+For debugging or manual builds, you can run the container interactively:
 
 ```bash
-./docker-build-interactive.sh
+docker build -t gcc-4.9.4-vle-builder .
+docker run --rm -it \
+    -v $(pwd):/src/gcc-4.9.4-vle:ro \
+    -v $(pwd)/../gcc-build:/build/gcc-build \
+    -v $(pwd)/output:/workspace/output \
+    gcc-4.9.4-vle-builder \
+    bash
 ```
-
-Provides shell access inside the container for debugging or manual builds.
 
 ## Detailed Usage
 
@@ -250,7 +254,7 @@ Or build on a system with more available space.
 **Solution:** 
 - The build uses all CPU cores by default (`-j$(nproc)`)
 - Ensure Docker has adequate CPU and memory resources allocated
-- Consider building with fewer parallel jobs: Edit `docker-build-and-package.sh` and change `make -j$(nproc)` to `make -j4`
+- Consider building with fewer parallel jobs: Edit `build-and-package.sh` and change `make -j$(nproc)` to `make -j4`
 
 ### Missing /usr/bin/file
 
@@ -265,7 +269,7 @@ apt-get install -y file
 
 ### Changing Build Options
 
-Edit `docker-build-and-package.sh` to modify configure options:
+Edit `build-and-package.sh` to modify configure options:
 
 ```bash
 ${SOURCE_DIR}/configure \
@@ -309,7 +313,7 @@ jobs:
       - name: Build Docker image
         run: docker build -t gcc-4.9.4-vle-builder .
       - name: Build GCC
-        run: ./docker-build.sh
+        run: ./build.sh
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
@@ -319,9 +323,8 @@ jobs:
 ## File Reference
 
 - **Dockerfile** - Container image definition
-- **docker-build-and-package.sh** - Main build script (runs in container)
-- **docker-build.sh** - Automated wrapper script
-- **docker-build-interactive.sh** - Interactive shell access
+- **build-and-package.sh** - Main build script (runs in container, produces both .deb and .tar.bz2)
+- **build.sh** - Unified build wrapper script
 - **.dockerignore** - Files excluded from Docker context
 
 ## Portability

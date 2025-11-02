@@ -23,14 +23,11 @@ ${SOURCE_DIR}/configure \
     --prefix=${PREFIX} \
     --enable-languages=c,c++ \
     --enable-threads=posix \
-    --disable-bootstrap \
-    CXXFLAGS="-std=c++14 -Wno-error=literal-suffix -Wno-error=cast-function-type -Wno-error=implicit-fallthrough"
+    --disable-bootstrap
 
 # Build
 echo "Building GCC (this may take several hours)..."
-export CXXFLAGS="-std=c++14 -Wno-error=literal-suffix -Wno-error=cast-function-type -Wno-error=implicit-fallthrough -Wno-error=shift-overflow"
-export CXXFLAGS_FOR_BUILD="$CXXFLAGS"
-make -j$(nproc) CXXFLAGS="$CXXFLAGS"
+make -j$(nproc)
 
 # Install to staging directory
 echo "Installing GCC to staging directory..."

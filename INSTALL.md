@@ -149,40 +149,20 @@ For a repeatable, isolated build environment, use the provided Docker setup.
 Build GCC using Docker:
 
 ```bash
-./docker-build.sh
+./build.sh
 ```
 
 This will:
 1. Build the Docker image with all dependencies
 2. Configure GCC
 3. Compile GCC (may take several hours)
-4. Package GCC into `.deb` and `.tar.bz2` artifacts
+4. Package GCC into both `.deb` and `.tar.bz2` artifacts
 
 The build artifacts will be in `./output/` directory:
 - `gcc-4.9.4-vle_1_<arch>.deb` - Debian package ready for installation
 - `gcc-4.9.4-vle-<arch>.tar.bz2` - Compressed archive of the complete compiler
 
 The build output will be in `../gcc-build/` directory.
-
-### Interactive Build
-
-To build interactively with shell access:
-
-```bash
-./docker-build-interactive.sh
-```
-
-Once inside the container:
-
-```bash
-cd /build/gcc-build
-/src/gcc-4.9.4-vle/configure \
-    --prefix=/usr/local/gcc-4.9.4-vle \
-    --enable-languages=c,c++ \
-    --enable-threads=posix \
-    --disable-bootstrap
-make -j$(nproc)
-```
 
 ### Manual Docker Usage
 

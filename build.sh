@@ -1,6 +1,6 @@
 #!/bin/bash
-# Build script for GCC 4.9.4-VLE using Docker
-# Builds GCC and creates .deb and .tar.bz2 artifacts
+# Unified build script for GCC 4.9.4-VLE using Docker
+# Builds GCC and creates both .deb and .tar.bz2 artifacts
 
 set -e
 

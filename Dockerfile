@@ -59,7 +59,7 @@ RUN rm -rf /var/lib/apt/lists/*
 WORKDIR /build
 
 # Copy build script (changes often, so this invalidates minimal layers)
-COPY docker-build-and-package.sh /build/build-and-package.sh
+COPY build-and-package.sh /build/build-and-package.sh
 
 RUN chmod +x /build/build-and-package.sh
 
