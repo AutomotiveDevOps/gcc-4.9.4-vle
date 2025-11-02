@@ -93,6 +93,26 @@ _gcov_flush.o _gcov_fork.o _gcov_execl.o _gcov_execlp.o _gcov_execle.o _gcov_exe
 echo "Building GCC (this may take several hours)..."
 # Set FLEXFLAGS for compatibility with newer flex versions
 export FLEXFLAGS="--nounistd"
+
+# Pre-create empty libgcov-interface .o files to prevent compilation attempts
+# These will be overwritten by our touch rules in Makefiles, but creating them
+# early prevents Make from trying to compile via pattern rules
+echo "Pre-creating empty libgcov-interface object files..."
+for dir in $(find ${BUILD_DIR} -type d -name "libgcc" 2>/dev/null); do
+    touch "${dir}/_gcov_flush.o" "${dir}/_gcov_fork.o" "${dir}/_gcov_execl.o" \
+          "${dir}/_gcov_execlp.o" "${dir}/_gcov_execle.o" "${dir}/_gcov_execv.o" \
+          "${dir}/_gcov_execvp.o" "${dir}/_gcov_execve.o" "${dir}/_gcov_reset.o" \
+          "${dir}/_gcov_dump.o" 2>/dev/null || true
+done
+
+# Also create them in any multilib subdirectories that might exist
+find ${BUILD_DIR} -type d -path "*/32/libgcc" -o -path "*/x86_64-*/libgcc" 2>/dev/null | while read dir; do
+    touch "${dir}/_gcov_flush.o" "${dir}/_gcov_fork.o" "${dir}/_gcov_execl.o" \
+          "${dir}/_gcov_execlp.o" "${dir}/_gcov_execle.o" "${dir}/_gcov_execv.o" \
+          "${dir}/_gcov_execvp.o" "${dir}/_gcov_execve.o" "${dir}/_gcov_reset.o" \
+          "${dir}/_gcov_dump.o" 2>/dev/null || true
+done
+
 make -j$(nproc) FLEXFLAGS="--nounistd"
 
 # Install to staging directory
