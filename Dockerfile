@@ -32,7 +32,6 @@ RUN apt-get update && apt-get install -y \
     perl \
     zlib1g-dev \
     libc6-dev \
-    libstdc++-dev \
     gcc-multilib \
     g++-multilib \
     && rm -rf /var/lib/apt/lists/*
