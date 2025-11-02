@@ -14,6 +14,9 @@ echo "=== Building GCC ${VERSION}-VLE ==="
 # kernel headers (Ubuntu 24.04+). The sanitizers are optional and not required
 # for the compiler to function. If sanitizer support is needed, it can be
 # built separately with modern toolchains.
+# Note: multilib is disabled to avoid symlink race conditions in parallel builds
+# on modern systems. If 32-bit support is needed, it can be enabled but may
+# require sequential builds or additional fixes.
 
 # Create directories
 mkdir -p ${BUILD_DIR}
@@ -35,7 +38,8 @@ ${SOURCE_DIR}/configure \
     --enable-languages=c,c++ \
     --enable-threads=posix \
     --disable-bootstrap \
-    --disable-libsanitizer
+    --disable-libsanitizer \
+    --disable-multilib
 
 # Build
 echo "Building GCC (this may take several hours)..."
