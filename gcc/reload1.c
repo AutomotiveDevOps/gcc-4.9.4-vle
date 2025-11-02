@@ -3042,7 +3042,7 @@ elimination_effects (rtx x, enum machine_mode mem_mode)
 
       /* These two aren't unary operators.  */
       if (code == POST_MODIFY || code == PRE_MODIFY)
-	break;
+	return;
 
       /* Fall through to generic unary operation case.  */
     case STRICT_LOW_PART:
