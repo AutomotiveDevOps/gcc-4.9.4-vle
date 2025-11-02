@@ -441,7 +441,7 @@ init_reload (void)
 
   while (memory_address_p (QImode, tem))
     {
-      spill_indirect_levels++;
+      this_target_reload->x_spill_indirect_levels = (bool)((int)this_target_reload->x_spill_indirect_levels + 1);
       tem = gen_rtx_MEM (Pmode, tem);
     }
 
