@@ -19,6 +19,7 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 %option noinput
+%option nounistd
 
 %{
 #ifdef GENERATOR_FILE
