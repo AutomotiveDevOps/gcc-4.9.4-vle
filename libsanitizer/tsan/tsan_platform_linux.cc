@@ -11,6 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 
+// Compatibility fix for modern glibc: Define _GNU_SOURCE before any system includes
+// to expose __res_state type from resolv.h
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include "sanitizer_common/sanitizer_platform.h"
 #if SANITIZER_LINUX
 
@@ -41,11 +47,6 @@
 #include <errno.h>
 #include <sched.h>
 #include <dlfcn.h>
-// Compatibility fix for modern glibc: __res_state requires explicit feature test
-// Define _GNU_SOURCE before including resolv.h to expose __res_state
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
 #define __need_res_state
 #include <resolv.h>
 #include <malloc.h>
@@ -356,7 +357,18 @@ bool IsGlobalVar(uptr addr) {
 // closes within glibc. The code is a pure hack.
 int ExtractResolvFDs(void *state, int *fds, int nfd) {
   int cnt = 0;
-  __res_state *statp = (__res_state*)state;
+  // Compatibility fix for modern glibc: __res_state is a typedef of struct __res_state
+  // Since _GNU_SOURCE is defined at the top of the file, we should have access to it
+  // If not available, define a compatible structure layout
+  struct res_state_compat {
+    union {
+      struct {
+        void *nsaddrs[MAXNS];
+        int nssocks[MAXNS];
+      } _ext;
+    } _u;
+  };
+  struct res_state_compat *statp = (struct res_state_compat*)state;
   for (int i = 0; i < MAXNS && cnt < nfd; i++) {
     if (statp->_u._ext.nsaddrs[i] && statp->_u._ext.nssocks[i] != -1)
       fds[cnt++] = statp->_u._ext.nssocks[i];
