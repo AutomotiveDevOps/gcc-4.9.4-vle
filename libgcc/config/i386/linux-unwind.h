@@ -58,11 +58,18 @@ x86_64_fallback_frame_state (struct _Unwind_Context *context,
   if (*(unsigned char *)(pc+0) == 0x48
       && *(unsigned long long *)(pc+1) == RT_SIGRETURN_SYSCALL)
     {
+      /* Modern glibc (2.26+) changed ucontext structure.
+         Handle both old and new glibc versions.  */
+#if __GLIBC_PREREQ(2, 26)
+      ucontext_t *uc_ = (ucontext_t *) context->cfa;
+      sc = (struct sigcontext *) (void *) &uc_->uc_mcontext;
+#else
       struct ucontext *uc_ = context->cfa;
       /* The void * cast is necessary to avoid an aliasing warning.
          The aliasing warning is correct, but should not be a problem
          because it does not alias anything.  */
       sc = (struct sigcontext *) (void *) &uc_->uc_mcontext;
+#endif
     }
   else
     return _URC_END_OF_STACK;
@@ -133,6 +140,18 @@ x86_fallback_frame_state (struct _Unwind_Context *context,
 	   && *(unsigned int *)(pc+1) == 173
 	   && *(unsigned short *)(pc+5) == 0x80cd)
     {
+      /* Modern glibc (2.26+) changed ucontext structure.
+         Handle both old and new glibc versions.  */
+#if __GLIBC_PREREQ(2, 26)
+      struct rt_sigframe {
+	int sig;
+	siginfo_t *pinfo;
+	void *puc;
+	siginfo_t info;
+	ucontext_t uc;
+      } *rt_ = context->cfa;
+      sc = (struct sigcontext *) (void *) &rt_->uc.uc_mcontext;
+#else
       struct rt_sigframe {
 	int sig;
 	siginfo_t *pinfo;
@@ -144,6 +163,7 @@ x86_fallback_frame_state (struct _Unwind_Context *context,
          The aliasing warning is correct, but should not be a problem
          because it does not alias anything.  */
       sc = (struct sigcontext *) (void *) &rt_->uc.uc_mcontext;
+#endif
     }
   else
     return _URC_END_OF_STACK;

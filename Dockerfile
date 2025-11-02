@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y \
     gzip \
     bzip2 \
     tar \
+    file \
     libgmp-dev \
     libmpfr-dev \
     libmpc-dev \
@@ -34,23 +35,23 @@ RUN apt-get update && apt-get install -y \
     bison \
     zlib1g-dev \
     libc6-dev \
-    gcc-multilib \
-    g++-multilib \
+    checkinstall \
+    dpkg-dev \
+    fakeroot \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /build
 
-# Copy source code (will be overridden by volume mount in practice)
-COPY . /src/gcc-4.9.4-vle
+# Copy build script (changes often, so this invalidates minimal layers)
+COPY build-and-package.sh /build/build-and-package.sh
 
-# Create build directory
-RUN mkdir -p /build/gcc-build
+RUN chmod +x /build/build-and-package.sh
 
 # Set environment for build
 ENV CC=gcc
 ENV CXX=g++
 
-# Default command: configure and build
-CMD ["bash", "-c", "cd /build/gcc-build && /src/gcc-4.9.4-vle/configure --prefix=/usr/local/gcc-4.9.4-vle --enable-languages=c,c++ --enable-threads=posix --disable-bootstrap && make -j$(nproc)"]
+# Default command: build and package
+CMD ["/build/build-and-package.sh"]
 
