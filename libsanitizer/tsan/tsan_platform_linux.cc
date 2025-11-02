@@ -42,8 +42,9 @@
 #include <sched.h>
 #include <dlfcn.h>
 // Compatibility fix for modern glibc: __res_state requires explicit feature test
-#ifndef __USE_GNU
-#define __USE_GNU
+// Define _GNU_SOURCE before including resolv.h to expose __res_state
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
 #endif
 #define __need_res_state
 #include <resolv.h>
