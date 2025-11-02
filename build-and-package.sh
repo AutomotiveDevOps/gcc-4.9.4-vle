@@ -27,7 +27,9 @@ ${SOURCE_DIR}/configure \
 
 # Build
 echo "Building GCC (this may take several hours)..."
-make -j$(nproc)
+# Set FLEXFLAGS for compatibility with newer flex versions
+export FLEXFLAGS="--nounistd"
+make -j$(nproc) FLEXFLAGS="--nounistd"
 
 # Install to staging directory
 echo "Installing GCC to staging directory..."
