@@ -81,9 +81,13 @@ find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i '/^\$(li
 find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i '/\$(gcc_compile).*-c.*libgcov-interface\.c/s/^/# DISABLED /' {} \; 2>/dev/null || true
 # Add explicit empty file creation rules BEFORE any pattern rules (insert right after LIBGCOV_DRIVER)
 # Use touch to create empty .o files that satisfy dependencies without compiling
-find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sh -c '
-    awk '\''/^LIBGCOV_DRIVER =/ { print; print ""; print "# Disable libgcov-interface - create empty files"; print "_gcov_flush.o _gcov_fork.o _gcov_execl.o _gcov_execlp.o _gcov_execle.o _gcov_execv.o _gcov_execvp.o _gcov_execve.o _gcov_reset.o _gcov_dump.o:"; print "\ttouch \"\$\@\""; next } { print }'\'' "$1" > "$1.tmp" && mv "$1.tmp" "$1"
-' _ {} \; 2>/dev/null || true
+# These MUST come before pattern rules to take precedence in Make's rule resolution
+find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i '/^LIBGCOV_DRIVER =/a\
+\
+# Disable libgcov-interface - create empty files\
+_gcov_flush.o _gcov_fork.o _gcov_execl.o _gcov_execlp.o _gcov_execle.o _gcov_execv.o _gcov_execvp.o _gcov_execve.o _gcov_reset.o _gcov_dump.o:\
+\ttouch "$@"\
+' {} \; 2>/dev/null || true
 
 # Build
 echo "Building GCC (this may take several hours)..."
