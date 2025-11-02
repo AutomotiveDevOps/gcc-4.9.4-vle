@@ -7,10 +7,11 @@ This document provides step-by-step instructions for building GCC 4.9.4-VLE on U
 1. [Prerequisites](#prerequisites)
 2. [System Requirements](#system-requirements)
 3. [Installing Dependencies](#installing-dependencies)
-4. [Building GCC](#building-gcc)
-5. [Testing](#testing)
-6. [Installation](#installation)
-7. [Creating a Debian Package (.deb)](#creating-a-debian-package-deb)
+4. [Building with Docker (Recommended)](#building-with-docker-recommended)
+5. [Building GCC](#building-gcc)
+6. [Testing](#testing)
+7. [Installation](#installation)
+8. [Creating a Debian Package (.deb)](#creating-a-debian-package-deb)
 
 ## Prerequisites
 
@@ -137,6 +138,63 @@ sudo apt update && sudo apt install -y \
     libstdc++-dev \
     gcc-multilib \
     g++-multilib
+```
+
+## Building with Docker (Recommended)
+
+For a repeatable, isolated build environment, use the provided Docker setup.
+
+### Quick Start
+
+Build GCC using Docker:
+
+```bash
+./docker-build.sh
+```
+
+This will:
+1. Build the Docker image with all dependencies
+2. Configure GCC
+3. Compile GCC (may take several hours)
+
+The build output will be in `../gcc-build/` directory.
+
+### Interactive Build
+
+To build interactively with shell access:
+
+```bash
+./docker-build-interactive.sh
+```
+
+Once inside the container:
+
+```bash
+cd /build/gcc-build
+/src/gcc-4.9.4-vle/configure \
+    --prefix=/usr/local/gcc-4.9.4-vle \
+    --enable-languages=c,c++ \
+    --enable-threads=posix \
+    --disable-bootstrap
+make -j$(nproc)
+```
+
+### Manual Docker Usage
+
+Build the image:
+
+```bash
+docker build -t gcc-4.9.4-vle-builder .
+```
+
+Run the build:
+
+```bash
+mkdir -p ../gcc-build
+docker run --rm \
+    -v $(pwd):/src/gcc-4.9.4-vle:ro \
+    -v $(pwd)/../gcc-build:/build/gcc-build \
+    gcc-4.9.4-vle-builder
 ```
 
 ## Building GCC
