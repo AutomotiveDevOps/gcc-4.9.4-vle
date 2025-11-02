@@ -23,7 +23,8 @@ ${SOURCE_DIR}/configure \
     --prefix=${PREFIX} \
     --enable-languages=c,c++ \
     --enable-threads=posix \
-    --disable-bootstrap
+    --disable-bootstrap \
+    CXXFLAGS="-Wno-error=literal-suffix -Wno-error=cast-function-type -Wno-error=implicit-fallthrough"
 
 # Build
 echo "Building GCC (this may take several hours)..."
