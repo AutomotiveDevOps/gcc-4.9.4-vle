@@ -28,8 +28,9 @@ ${SOURCE_DIR}/configure \
 
 # Build
 echo "Building GCC (this may take several hours)..."
-export CXXFLAGS="-std=c++14 -Wno-error=literal-suffix -Wno-error=cast-function-type -Wno-error=implicit-fallthrough"
-make -j$(nproc)
+export CXXFLAGS="-std=c++14 -Wno-error=literal-suffix -Wno-error=cast-function-type -Wno-error=implicit-fallthrough -Wno-error=shift-overflow"
+export CXXFLAGS_FOR_BUILD="$CXXFLAGS"
+make -j$(nproc) CXXFLAGS="$CXXFLAGS"
 
 # Install to staging directory
 echo "Installing GCC to staging directory..."
