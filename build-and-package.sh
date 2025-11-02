@@ -75,12 +75,12 @@ find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i \
     {} \; 2>/dev/null || true
 # Also explicitly set libgcov-interface-objects to empty
 find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i 's/^libgcov-interface-objects =.*/libgcov-interface-objects =/' {} \; 2>/dev/null || true
-# Add explicit empty rules to prevent implicit rule matching
-find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sh -c 'cat >> "$1" << '\''EOF'\''
-# Disable libgcov-interface compilation
-_gcov_flush.o _gcov_fork.o _gcov_execl.o _gcov_execlp.o _gcov_execle.o _gcov_execv.o _gcov_execvp.o _gcov_execve.o _gcov_reset.o _gcov_dump.o:
-	@echo "Skipping libgcov-interface build" > /dev/null
-EOF
+# Remove or comment out any explicit pattern rules for libgcov-interface-objects
+find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i '/\$.*libgcov-interface-objects.*:.*libgcov-interface\.c/,/^\t/ s/^/# DISABLED: /' {} \; 2>/dev/null || true
+# Add explicit empty .PHONY rules BEFORE any pattern rules (insert right after LIBGCOV_DRIVER)
+# This prevents Make from using pattern rules or implicit rules
+find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sh -c '
+    awk '\''/^LIBGCOV_DRIVER =/ { print; print ""; print ".PHONY: _gcov_flush.o _gcov_fork.o _gcov_execl.o _gcov_execlp.o _gcov_execle.o _gcov_execv.o _gcov_execvp.o _gcov_execve.o _gcov_reset.o _gcov_dump.o"; print "_gcov_flush.o _gcov_fork.o _gcov_execl.o _gcov_execlp.o _gcov_execle.o _gcov_execv.o _gcov_execvp.o _gcov_execve.o _gcov_reset.o _gcov_dump.o:"; print "\t@true"; next } { print }'\'' "$1" > "$1.tmp" && mv "$1.tmp" "$1"
 ' _ {} \; 2>/dev/null || true
 
 # Build
