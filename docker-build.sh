@@ -15,7 +15,7 @@ echo "Artifacts will be saved to: ${OUTPUT_DIR}"
 # Build Docker image if it doesn't exist
 if ! docker image inspect "${IMAGE_NAME}" >/dev/null 2>&1; then
     echo "Building Docker image..."
-    docker build -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
+    docker build --network=host -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
 fi
 
 # Create output directory
