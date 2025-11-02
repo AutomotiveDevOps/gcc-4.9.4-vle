@@ -3045,6 +3045,7 @@ elimination_effects (rtx x, enum machine_mode mem_mode)
 	return;
 
       /* Fall through to generic unary operation case.  */
+      /* FALLTHRU */
     case STRICT_LOW_PART:
     case NEG:          case NOT:
     case SIGN_EXTEND:  case ZERO_EXTEND:
