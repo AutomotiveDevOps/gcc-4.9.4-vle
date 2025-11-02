@@ -61,9 +61,14 @@ echo "Fixing generated Makefiles to disable libgcov-interface..."
 # Wait a moment for any concurrent configure processes to finish
 sleep 2
 # Fix all libgcc Makefiles that were generated
+# First, empty LIBGCOV_INTERFACE
 find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i '/^LIBGCOV_INTERFACE =/,/^LIBGCOV_DRIVER =/ { /^LIBGCOV_INTERFACE =/ s/=.*/= /; /_gcov_flush/,/_gcov_dump/ d; }' {} \; 2>/dev/null || true
-# Also remove the compilation rule if it exists
+# Also remove the compilation rule if it exists (try multiple patterns)
 find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i '/$(libgcov-interface-objects):.*libgcov-interface\.c/,/^[[:space:]]*\$(gcc_compile)/ d' {} \; 2>/dev/null || true
+find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i '/_gcov_flush.*libgcov-interface\|_gcov_fork.*libgcov-interface\|_gcov_execl.*libgcov-interface/d' {} \; 2>/dev/null || true
+# Most importantly: Comment out or remove libgcov-interface-objects from libgcov-objects
+find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i 's/$(libgcov-interface-objects) //g' {} \; 2>/dev/null || true
+find ${BUILD_DIR} -name Makefile -path "*/libgcc/Makefile" -exec sed -i 's/ $(libgcov-interface-objects)//g' {} \; 2>/dev/null || true
 
 # Build
 echo "Building GCC (this may take several hours)..."
